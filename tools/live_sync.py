@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
+from itertools import pairwise
 from pathlib import Path
 
 import numpy as np
@@ -219,7 +220,7 @@ def place(session):
 def uncovered(start, end, spans):
     out = [(start, end)]
     for a, b in spans:
-        out = [piece for s, e in out for piece in ((s, min(e, a)), (max(s, b), e)) if piece[1] - piece[0] >= FPS]
+        out = [piece for s, e in out for piece in ((s, min(e, a)), (max(s, b), e)) if piece[0] < piece[1]]
     return out
 
 
@@ -268,13 +269,10 @@ def sync(session):
     data["cameras"] = sorted({c["camera"] for c in kept}, key=longest, reverse=True)
     for c in sorted(kept, key=lambda c: c["pos"]):
         start = frame(c["pos"] + c["in"])
-        length = int((c["out"] - c["in"]) * FPS)
         stem = c["path"].name.split(".")[0]
         data["clips"].append({
             "camera": c["camera"], "source": rel(c["path"]), "edit": f"Edit/{c['camera']}/{stem}_edit.mov",
-            "in": round(c["in"], 4), "out": round(c["out"], 4), "frame": start, "placed_by": c["by"],
-            "phone_audio": [list(s) for s in uncovered(start, start + length, spans)]
-            if c["camera"] == data["cameras"][-1] else []})
+            "in": round(c["in"], 4), "out": round(c["out"], 4), "frame": start, "placed_by": c["by"]})
     data["stills"] = [(a + b) // 2 for a, b in spans]
     SESSIONS.mkdir(exist_ok=True)
     target.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
@@ -329,16 +327,25 @@ def encode(session):
 
 def resolve_project(data):
     session = RECORDINGS / data["session"]
+    label = lambda camera: re.sub(r"(\D)(\d)", r"\1 \2", camera)
+    sound = sorted(data["cameras"], reverse=True)
     items = [{"path": str(session / m["edit"]), "type": 2, "track": 1, "frame": m["frame"]} for m in data["masters"]]
     for c in data["clips"]:
         path = str(session / c["edit"])
         items.append({"path": path, "type": 1, "track": data["cameras"].index(c["camera"]) + 1, "frame": c["frame"]})
-        items += [{"path": path, "type": 2, "track": 2, "frame": a, "src": [a - c["frame"], b - c["frame"] - 1]}
-                  for a, b in c["phone_audio"]]
-    phone = any(c["phone_audio"] for c in data["clips"])
+    covered = [(m["frame"], m["frame"] + round(m["seconds"] * FPS)) for m in data["masters"]]
+    for track, camera in enumerate(sound, 2):
+        spans = [(c, c["frame"], c["frame"] + int((c["out"] - c["in"]) * FPS))
+                 for c in data["clips"] if c["camera"] == camera]
+        for c, start, end in spans:
+            item = {"path": str(session / c["edit"]), "type": 2, "track": track, "frame": start}
+            cuts = sorted({start, end, *(t for gap in uncovered(start, end, covered) for t in gap)})
+            items += [{**item, "frame": a, "src": [a - start, b - start - 1]}
+                      for a, b in pairwise(cuts)] if len(cuts) > 2 else [item]
+        covered += [(start, end) for _, start, end in spans]
     return {"name": data["session"], "timeline": data["timeline"], "width": data["width"], "height": data["height"],
-            "mismatch": "scaleToFit", "video_tracks": [re.sub(r"(\D)(\d)", r"\1 \2", c) for c in data["cameras"]],
-            "audio_tracks": ["Master", "Phone"] if phone else ["Master"], "items": items, "stills": data["stills"]}
+            "mismatch": "scaleToFit", "video_tracks": [label(c) for c in data["cameras"]],
+            "audio_tracks": ["Master", *map(label, sound)], "items": items, "stills": data["stills"]}
 
 
 def lua(value):

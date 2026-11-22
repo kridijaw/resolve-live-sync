@@ -182,9 +182,10 @@ local function build(pm, spec)
                 info.startFrame, info.endFrame = it.src[1], it.src[2]
             end
             local item = append(pool, info)
-            if not item and not it.src then
-                info.startFrame = 0
-                info.endFrame = (tonumber(mpi:GetClipProperty("Frames")) or 0) - 1
+            if not item then
+                local last = (tonumber(mpi:GetClipProperty("Frames")) or 0) - 1
+                info.startFrame = info.startFrame or 0
+                info.endFrame = math.min(info.endFrame or last, last)
                 item = append(pool, info)
             end
             if not item then

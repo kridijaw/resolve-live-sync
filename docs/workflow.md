@@ -39,7 +39,8 @@ Check it between `sync` and `encode`.
 - `placed_by`: `audio` (matched to a master), `audio near clock` (matched close to the recording time, also against other takes) or `clock` (recording time only).
 - `in`, `out`: source range in seconds. Takes over 10 minutes are trimmed to 2 minutes around the master. `frame` is the timeline position of `in` at 30 fps, so move both together.
 - `cameras`: video tracks from bottom to top.
-- `phone_audio`: timeline ranges that use the top camera's sound because no master covers them.
+
+Audio tracks are the master, then one per camera in reverse name order (Pixel 7 before Pixel 5). They hold the full sound of every clip, cut at the edges of the gaps that no track above covers.
 
 ## Why edit copies
 
