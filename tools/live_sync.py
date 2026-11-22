@@ -350,7 +350,14 @@ def lua(value):
 
 
 def resolve():
-    projects = [resolve_project(json.loads(p.read_text())) for p in sorted(SESSIONS.glob("*.json"))]
+    projects = []
+    for p in sorted(SESSIONS.glob("*.json")):
+        project = resolve_project(json.loads(p.read_text()))
+        missing = {i["path"] for i in project["items"] if not Path(i["path"]).exists()}
+        if missing:
+            print(f"Left out {project['name']}: {len(missing)} files missing, run encode first")
+        else:
+            projects.append(project)
     config = {"out": str(OUT / "resolve"), "projects": projects}
     (OUT / "resolve").mkdir(parents=True, exist_ok=True)
     script = (TOOLS / "resolve_setup.lua").read_text().replace("__CONFIG__", lua(config))
