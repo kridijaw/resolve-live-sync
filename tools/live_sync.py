@@ -371,6 +371,9 @@ def resolve():
     RESOLVE_SCRIPT.parent.mkdir(parents=True, exist_ok=True)
     RESOLVE_SCRIPT.write_text(script)
     print(f"Wrote {RESOLVE_SCRIPT} with {len(projects)} projects")
+    trim = RESOLVE_SCRIPT.with_name("Live Sync Trim Audio.lua")
+    shutil.copyfile(TOOLS / "resolve_trim.lua", trim)
+    print(f"Wrote {trim}")
 
 
 def main():
@@ -379,7 +382,7 @@ def main():
     for name, text in (("sync", "match clips to the master and write tools/sessions/<session>.json"),
                        ("encode", "write constant-frame-rate edit copies")):
         sub.add_parser(name, help=text).add_argument("session", help="folder name in Aufnahmen")
-    sub.add_parser("resolve", help="install the Resolve setup script for all sessions")
+    sub.add_parser("resolve", help="install the Resolve scripts for all sessions")
     args = parser.parse_args()
     if args.command == "resolve":
         return resolve()

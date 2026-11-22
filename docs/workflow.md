@@ -30,7 +30,8 @@ tools/.venv/bin/python tools/live_sync.py resolve
 
 1. `sync` matches every clip to the master and writes `tools/sessions/<session>.json`. Master files that continue each other without a gap are joined.
 2. `encode` writes constant-frame-rate edit copies to `Edit/`. Existing copies are kept. It stops before free disk space drops below 30 GB.
-3. `resolve` installs `Live Sync Setup`. Run it in Resolve under **Workspace > Scripts**. It creates missing projects and fills empty timelines, and leaves filled timelines alone. It logs to **Workspace > Console** and writes check stills to `tools/out/resolve/`. Sessions with missing edit copies are left out.
+3. `resolve` installs `Live Sync Setup` and `Live Sync Trim Audio`. Run `Live Sync Setup` in Resolve under **Workspace > Scripts**. It creates missing projects and fills empty timelines, and leaves filled timelines alone. It logs to **Workspace > Console** and writes check stills to `tools/out/resolve/`. Sessions with missing edit copies are left out.
+4. Optional: open a timeline and run `Live Sync Trim Audio`. It duplicates the timeline as `<name> trimmed` and deletes phone audio clips there that the tracks above fully cover. The original stays as it is. Clips that are only partly covered are kept.
 
 ## Session file
 
