@@ -1,0 +1,9 @@
+/*
+!/.gitignore
+!/README.md
+!/docs/
+!/tools/
+/tools/.venv/
+/tools/out/
+__pycache__/
+.DS_Store
