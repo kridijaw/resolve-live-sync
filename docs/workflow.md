@@ -47,7 +47,7 @@ Audio tracks are the master, then one per camera in reverse name order (Pixel 7 
 
 ## Fixed assumptions
 
-- Recordings are in `Aufnahmen/` next to `tools/` (`RECORDINGS` in `live_sync.py`).
+- Recordings are in `Aufnahmen/` next to `tools/`, which can be a symlink (`RECORDINGS` in `live_sync.py`).
 - Masters are WAV files in `Master/`. Clips are `.mp4` or `.mov`.
 - The recording time is read only from Pixel names (`PXL_YYYYMMDD_HHMMSSmmm`, UTC). Clips with other names are placed by audio alone and skipped if nothing matches.
 - Everything runs at 30 fps. To change it, edit `FPS` in `live_sync.py` and `timelineFrameRate` in `resolve_setup.lua`, then sync and encode again.

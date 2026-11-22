@@ -17,7 +17,7 @@ from scipy.io import wavfile
 from scipy.signal import butter, sosfilt
 
 TOOLS = Path(__file__).resolve().parent
-RECORDINGS = TOOLS.parent / "Aufnahmen"
+RECORDINGS = (TOOLS.parent / "Aufnahmen").resolve()
 SESSIONS = TOOLS / "sessions"
 OUT = TOOLS / "out"
 RESOLVE_SCRIPT = Path.home() / ("Library/Application Support/Blackmagic Design/DaVinci Resolve/"
