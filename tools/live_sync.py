@@ -20,7 +20,7 @@ RECORDINGS = TOOLS.parent / "Aufnahmen"
 SESSIONS = TOOLS / "sessions"
 OUT = TOOLS / "out"
 RESOLVE_SCRIPT = Path.home() / ("Library/Application Support/Blackmagic Design/DaVinci Resolve/"
-                                "Fusion/Scripts/Utility/Live Sync Setup.py")
+                                "Fusion/Scripts/Utility/Live Sync Setup.lua")
 
 FPS = 30
 RATE = 8000
@@ -341,10 +341,19 @@ def resolve_project(data):
             "audio_tracks": ["Master", "Phone"] if phone else ["Master"], "items": items, "stills": data["stills"]}
 
 
-def resolve(_=None):
+def lua(value):
+    if isinstance(value, dict):
+        return "{" + ", ".join(f"[{lua(k)}] = {lua(v)}" for k, v in value.items()) + "}"
+    if isinstance(value, (list, tuple)):
+        return "{" + ", ".join(lua(v) for v in value) + "}"
+    return json.dumps(value, ensure_ascii=False)
+
+
+def resolve():
     projects = [resolve_project(json.loads(p.read_text())) for p in sorted(SESSIONS.glob("*.json"))]
     config = {"out": str(OUT / "resolve"), "projects": projects}
-    script = (TOOLS / "resolve_setup.py").read_text().replace("__CONFIG__", repr(json.dumps(config)))
+    (OUT / "resolve").mkdir(parents=True, exist_ok=True)
+    script = (TOOLS / "resolve_setup.lua").read_text().replace("__CONFIG__", lua(config))
     RESOLVE_SCRIPT.parent.mkdir(parents=True, exist_ok=True)
     RESOLVE_SCRIPT.write_text(script)
     print(f"Wrote {RESOLVE_SCRIPT} with {len(projects)} projects")
